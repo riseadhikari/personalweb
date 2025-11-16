@@ -73,6 +73,27 @@
             z-index: -1;
         }
 
+        #wallpaper-title {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 11vw;
+            font-weight: 900;
+            letter-spacing: 0.05em;
+            background: linear-gradient(180deg, #fff 0%, #000 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+            opacity: 0.35;
+            z-index: 0;
+            pointer-events: none;
+            user-select: none;
+            white-space: nowrap;
+            text-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 1px 0 #fff;
+        }
+
         /* Desktop icons */
 
         #desktop-icons {
@@ -773,6 +794,7 @@
 
 <body>
     <div id="desktop">
+        <div id="wallpaper-title">Rise 12</div>
         <div id="desktop-icons">
             <!-- data-x / data-y are initial positions (overridden by localStorage if present) -->
             <div class="desktop-icon" data-app="pc" data-x="16" data-y="16">
