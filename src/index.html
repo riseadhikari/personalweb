@@ -965,7 +965,7 @@
 
         // --- Open app / window manager ------------------------------------------
 
-        function openApp(appId) {
+        function openApp(appId, opts = {}) {
             const app = apps[appId];
             if (!app) return;
 
@@ -976,12 +976,20 @@
             win.style.zIndex = ++topZ;
             const vw = window.innerWidth;
             const vh = window.innerHeight - 50;
-            const left = Math.max(10, Math.random() * (vw - (app.width || 400) - 40));
-            const top = Math.max(20, Math.random() * (vh - (app.height || 250) - 80));
+            const width = Math.min(app.width || 400, vw - 20);
+            const height = Math.min(app.height || 260, vh - 20);
+            let left = 10, top = 20;
+            if (opts.left !== undefined && opts.top !== undefined) {
+                left = Math.max(0, Math.min(opts.left, vw - width));
+                top = Math.max(0, Math.min(opts.top, vh - height));
+            } else {
+                left = Math.max(0, Math.random() * (vw - width - 20));
+                top = Math.max(0, Math.random() * (vh - height - 20));
+            }
             win.style.left = left + "px";
             win.style.top = top + "px";
-            win.style.width = (app.width || 400) + "px";
-            win.style.height = (app.height || 260) + "px";
+            win.style.width = width + "px";
+            win.style.height = height + "px";
 
             win.innerHTML = `
         <div class="title-bar">
@@ -1771,29 +1779,23 @@
       `;
         }
 
-        // Autostart: open About and Browser side by side
-        // Open About window on the left
-        openApp("about");
-        // Open Browser window on the right, after a short delay to ensure DOM order
-        setTimeout(() => {
-            // Find the About window and move it to the left
-            const aboutWin = Array.from(document.querySelectorAll('.window .title-left .text'))
-                .find(el => el.textContent === 'About This System')?.closest('.window');
-            if (aboutWin) {
-                aboutWin.style.left = '60px';
-                aboutWin.style.top = '80px';
-            }
-            // Open Browser and move it to the right
-            openApp("browser");
-            setTimeout(() => {
-                const browserWin = Array.from(document.querySelectorAll('.window .title-left .text'))
-                    .find(el => el.textContent === 'Browser')?.closest('.window');
-                if (browserWin) {
-                    browserWin.style.left = '520px';
-                    browserWin.style.top = '80px';
-                }
-            }, 50);
-        }, 50);
+        // Autostart: open About and Browser side by side, always within screen
+        const vw = window.innerWidth;
+        const vh = window.innerHeight - 50;
+        const aboutWidth = Math.min(apps.about.width, vw - 20);
+        const aboutHeight = Math.min(apps.about.height, vh - 20);
+        const browserWidth = Math.min(apps.browser.width, vw - 20);
+        const browserHeight = Math.min(apps.browser.height, vh - 20);
+        // About on the left, Browser to the right (or below if not enough width)
+        let aboutLeft = 10, aboutTop = 20;
+        let browserLeft = aboutLeft + aboutWidth + 20, browserTop = aboutTop;
+        if (browserLeft + browserWidth > vw) {
+            // Not enough horizontal space, stack vertically
+            browserLeft = 10;
+            browserTop = aboutTop + aboutHeight + 20;
+        }
+        openApp("about", { left: aboutLeft, top: aboutTop });
+        openApp("browser", { left: browserLeft, top: browserTop });
     </script>
 </body>
 
