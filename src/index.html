@@ -1335,12 +1335,29 @@
             saveIconPositions(iconPositions);
         });
 
-        // open on double-click
+
+        // open on double-click (desktop) or double-tap (mobile)
         desktopIconsContainer.addEventListener("dblclick", (e) => {
             const icon = e.target.closest(".desktop-icon");
             if (!icon) return;
             const appId = icon.dataset.app;
             openApp(appId);
+        });
+
+        // Double-tap for touch devices
+        let lastTap = 0;
+        desktopIconsContainer.addEventListener("touchend", (e) => {
+            const icon = e.target.closest(".desktop-icon");
+            if (!icon) return;
+            const now = Date.now();
+            if (now - lastTap < 400) {
+                // Double-tap detected
+                const appId = icon.dataset.app;
+                openApp(appId);
+                lastTap = 0;
+            } else {
+                lastTap = now;
+            }
         });
 
         // --- Start menu + taskbar -----------------------------------------------
