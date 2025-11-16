@@ -1028,6 +1028,7 @@
             let dragOffsetX = 0;
             let dragOffsetY = 0;
 
+            // Mouse drag
             titleBar.addEventListener("mousedown", (e) => {
                 if (e.target.closest(".title-btn")) return;
                 const state = windowState.get(id);
@@ -1039,9 +1040,41 @@
                 focusWindow(id);
                 e.preventDefault();
             });
+            // Touch drag
+            titleBar.addEventListener("touchstart", (e) => {
+                if (e.target.closest(".title-btn")) return;
+                const state = windowState.get(id);
+                if (state && state.maximized) return;
+                dragging = true;
+                const rect = win.getBoundingClientRect();
+                const touch = e.touches[0];
+                dragOffsetX = touch.clientX - rect.left;
+                dragOffsetY = touch.clientY - rect.top;
+                focusWindow(id);
+                e.preventDefault();
+            }, { passive: false });
+
 
             document.addEventListener("mousemove", onMouseMove);
             document.addEventListener("mouseup", onMouseUp);
+            // Touch move/end
+            document.addEventListener("touchmove", function (e) {
+                if (!dragging) return;
+                const state = windowState.get(id);
+                if (!state || state.maximized) return;
+                const touch = e.touches[0];
+                let x = touch.clientX - dragOffsetX;
+                let y = touch.clientY - dragOffsetY;
+                const maxX = window.innerWidth - 100;
+                const maxY = window.innerHeight - 100;
+                x = Math.min(Math.max(-40, x), maxX);
+                y = Math.min(Math.max(0, y), maxY);
+                win.style.left = x + "px";
+                win.style.top = y + "px";
+            }, { passive: false });
+            document.addEventListener("touchend", function () {
+                dragging = false;
+            });
 
             function onMouseMove(e) {
                 if (!dragging) return;
@@ -1240,6 +1273,8 @@
         let dragIconOffsetX = 0;
         let dragIconOffsetY = 0;
 
+
+        // Mouse drag for icons
         desktopIconsContainer.addEventListener("mousedown", (e) => {
             const icon = e.target.closest(".desktop-icon");
             if (!icon) return;
@@ -1249,6 +1284,18 @@
             dragIconOffsetY = e.clientY - rect.top;
             e.preventDefault();
         });
+        // Touch drag for icons
+        desktopIconsContainer.addEventListener("touchstart", (e) => {
+            const icon = e.target.closest(".desktop-icon");
+            if (!icon) return;
+            draggingIcon = icon;
+            const rect = icon.getBoundingClientRect();
+            const touch = e.touches[0];
+            dragIconOffsetX = touch.clientX - rect.left;
+            dragIconOffsetY = touch.clientY - rect.top;
+            e.preventDefault();
+        }, { passive: false });
+
 
         document.addEventListener("mousemove", (e) => {
             if (!draggingIcon) return;
@@ -1257,8 +1304,27 @@
             draggingIcon.style.left = x + "px";
             draggingIcon.style.top = y + "px";
         });
+        document.addEventListener("touchmove", (e) => {
+            if (!draggingIcon) return;
+            const touch = e.touches[0];
+            const x = touch.clientX - dragIconOffsetX - desktopRect.left;
+            const y = touch.clientY - dragIconOffsetY - desktopRect.top;
+            draggingIcon.style.left = x + "px";
+            draggingIcon.style.top = y + "px";
+        }, { passive: false });
+
 
         document.addEventListener("mouseup", () => {
+            if (!draggingIcon) return;
+            const icon = draggingIcon;
+            draggingIcon = null;
+            const id = icon.dataset.app;
+            const left = parseInt(icon.style.left || "0", 10);
+            const top = parseInt(icon.style.top || "0", 10);
+            iconPositions[id] = { x: left, y: top };
+            saveIconPositions(iconPositions);
+        });
+        document.addEventListener("touchend", () => {
             if (!draggingIcon) return;
             const icon = draggingIcon;
             draggingIcon = null;
@@ -1564,12 +1630,30 @@
                 }
             }
 
+
+            // Mouse and touch for game
             canvas.addEventListener("mousedown", onClick);
+            canvas.addEventListener("touchstart", function (e) {
+                if (!running) return;
+                const rect = canvas.getBoundingClientRect();
+                const touch = e.touches[0];
+                const cx = touch.clientX - rect.left;
+                const cy = touch.clientY - rect.top;
+                if (cx >= x && cx <= x + size && cy >= y && cy <= y + size) {
+                    score++;
+                    scoreEl.textContent = score;
+                    vx = (Math.random() * 2 - 1.0) * 1.8;
+                    vy = (Math.random() * 2 - 1.0) * 1.8;
+                    if (Math.abs(vx) < 0.6) vx = 0.6 * Math.sign(vx || 1);
+                    if (Math.abs(vy) < 0.6) vy = 0.6 * Math.sign(vy || 1);
+                }
+            }, { passive: false });
 
             const win = container.closest(".window");
             win._destroy = () => {
                 running = false;
                 canvas.removeEventListener("mousedown", onClick);
+                canvas.removeEventListener("touchstart", onClick);
             };
         }
 
