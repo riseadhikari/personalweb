@@ -1648,8 +1648,29 @@
       `;
         }
 
-        // Autostart: flex a bit
+        // Autostart: open About and Browser side by side
+        // Open About window on the left
         openApp("about");
+        // Open Browser window on the right, after a short delay to ensure DOM order
+        setTimeout(() => {
+            // Find the About window and move it to the left
+            const aboutWin = Array.from(document.querySelectorAll('.window .title-left .text'))
+                .find(el => el.textContent === 'About This System')?.closest('.window');
+            if (aboutWin) {
+                aboutWin.style.left = '60px';
+                aboutWin.style.top = '80px';
+            }
+            // Open Browser and move it to the right
+            openApp("browser");
+            setTimeout(() => {
+                const browserWin = Array.from(document.querySelectorAll('.window .title-left .text'))
+                    .find(el => el.textContent === 'Browser')?.closest('.window');
+                if (browserWin) {
+                    browserWin.style.left = '520px';
+                    browserWin.style.top = '80px';
+                }
+            }, 50);
+        }, 50);
     </script>
 </body>
 
